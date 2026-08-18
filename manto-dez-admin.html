@@ -294,16 +294,17 @@
       <h3>Time e categoria</h3>
       <div class="field">
         <label for="fieldTeam">Time</label>
-        <select id="fieldTeam"></select>
+        <select id="fieldTeam" onchange="checkCollisionWarning()"></select>
       </div>
       <div class="field">
         <label for="fieldTipo">Tipo</label>
-        <select id="fieldTipo">
+        <select id="fieldTipo" onchange="checkCollisionWarning()">
           <option value="Torcedor">Torcedor</option>
           <option value="Jogador">Jogador</option>
           <option value="Retrô">Retrô</option>
         </select>
-        <div class="field-hint">Cada time só pode ter um produto de cada tipo. Escolher um tipo já usado edita o produto existente.</div>
+        <div class="field-hint">Você pode cadastrar quantos produtos quiser do mesmo Time + Tipo (ex.: várias camisas "Torcedor" diferentes do mesmo time).</div>
+        <div class="field-hint" id="collisionWarning" style="display:none; color:var(--amber);"></div>
       </div>
     </div>
 
@@ -635,6 +636,31 @@
 
     document.getElementById('formOverlay').classList.remove('hidden');
     window.scrollTo(0,0);
+    checkCollisionWarning();
+  }
+
+  // Mostra um aviso em tempo real se o Time+Tipo escolhido já tem produto —
+  // assim você percebe ANTES de tentar salvar, não só na hora da confirmação.
+  // Mostra quantos produtos já existem para esse Time+Tipo — só informativo,
+  // não bloqueia nada. Você pode cadastrar quantos quiser (ex.: Camisa 1,
+  // Camisa 2, Camisa 3, todas "Torcedor" do mesmo time).
+  function checkCollisionWarning(){
+    const warningEl = document.getElementById('collisionWarning');
+    if(editingProductId){ warningEl.style.display = "none"; return; } // editando, não se aplica
+
+    const teamId = document.getElementById('fieldTeam').value;
+    const team = TEAMS_CACHE.find(t => t.id === teamId);
+    const tipo = document.getElementById('fieldTipo').value;
+    if(!team){ warningEl.style.display = "none"; return; }
+
+    const prefix = team.nome + "||" + tipo;
+    const count = PRODUCTS_CACHE.filter(p => p.id === prefix || p.id.startsWith(prefix + "||")).length;
+    if(count > 0){
+      warningEl.textContent = `ℹ Já existem ${count} produto(s) "${tipo}" para ${team.nome}. Salvar aqui cadastra mais um (não substitui os outros).`;
+      warningEl.style.display = "block";
+    } else {
+      warningEl.style.display = "none";
+    }
   }
 
   function closeForm(){
@@ -642,9 +668,19 @@
     editingProductId = null;
   }
 
-  // Gera o ID no mesmo formato usado pelo catálogo público: "NomeDoTime||Tipo"
+  // Gera um ID único para um produto novo. Se já existir produto(s) com o
+  // mesmo Time+Tipo, adiciona um número sequencial no final — assim é
+  // possível cadastrar várias camisas diferentes sob o mesmo Time+Tipo
+  // (ex.: "Real Madrid||Torcedor", "Real Madrid||Torcedor||2", "||3"...).
+  // IMPORTANTE: só usar para criar produto NOVO. Ao editar, o ID existente
+  // do produto deve ser mantido (favoritos/carrinho dependem dele).
   function buildProductId(teamNome, tipo){
-    return teamNome + "||" + tipo;
+    const prefix = teamNome + "||" + tipo;
+    const jaExiste = (id) => PRODUCTS_CACHE.some(p => p.id === id);
+    if(!jaExiste(prefix)) return prefix;
+    let n = 2;
+    while(jaExiste(prefix + "||" + n)) n++;
+    return prefix + "||" + n;
   }
 
   async function saveProduct(){
@@ -668,6 +704,10 @@
 
     const id = editingProductId || buildProductId(team.nome, tipo);
 
+    await commitSaveProduct(id, team, tipo, titulo, subtitulo, descricao, preco, tamanhos, tags, disponivel, destaque, lancamento);
+  }
+
+  async function commitSaveProduct(id, team, tipo, titulo, subtitulo, descricao, preco, tamanhos, tags, disponivel, destaque, lancamento){
     const saveBtn = document.getElementById('saveBtn');
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="spinner"></span>';
@@ -761,11 +801,10 @@
   async function duplicateProduct(id){
     const product = PRODUCTS_CACHE.find(p => p.id === id);
     if(!product) return;
-    showToast('Duplicando produto...', null);
-    openForm(id);
-    // Ao duplicar, força escolher um TIPO diferente (já que o ID é único por time+tipo)
-    editingProductId = null;
-    document.getElementById('formTitle').textContent = 'Duplicar produto (escolha outro tipo)';
+    openForm(id); // reaproveita os dados do produto original nos campos
+    editingProductId = null; // mas ao salvar, cria um produto NOVO (não sobrescreve o original)
+    document.getElementById('formTitle').textContent = 'Duplicar produto';
+    checkCollisionWarning();
   }
 
   function confirmDelete(id){
