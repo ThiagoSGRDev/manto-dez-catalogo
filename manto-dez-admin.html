@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manto Dez Sports — Painel</title>
+<style>
+  :root{
+    --bg:#0B0E11; --panel:#12161B; --panel-2:#181D24; --line:#242B33;
+    --text:#F4F6F7; --text-dim:#9AA5B1; --text-faint:#5C6773;
+    --cyan:#22D3EE; --magenta:#E844C4; --green:#22C55E; --red:#EF4444; --amber:#F59E0B;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh; -webkit-tap-highlight-color:transparent;
+  }
+  input, select, textarea, button{ font-family:inherit; font-size:15px; }
+  .hidden{ display:none !important; }
+
+  /* ---- LOGIN ---- */
+  #loginView{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .login-box{ width:100%; max-width:360px; }
+  .login-logo{ text-align:center; margin-bottom:32px; }
+  .login-logo .brand{ font-size:24px; font-weight:800; letter-spacing:-0.02em; }
+  .login-logo .brand span{ background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .login-logo .sub{ font-size:13px; color:var(--text-dim); margin-top:4px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:13px; color:var(--text-dim); margin-bottom:6px; }
+  .field input{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:13px 14px; color:var(--text); outline:none;
+  }
+  .field input:focus{ border-color:var(--cyan); }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:none; border-radius:10px; padding:13px 18px; font-weight:600; cursor:pointer;
+    transition:opacity .15s;
+  }
+  .btn:active{ opacity:0.8; }
+  .btn-primary{ background:linear-gradient(90deg,var(--cyan),var(--magenta)); color:#0B0E11; width:100%; }
+  .btn-secondary{ background:var(--panel-2); color:var(--text); border:1px solid var(--line); }
+  .btn-danger{ background:rgba(239,68,68,0.12); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+  .btn-ghost{ background:transparent; color:var(--text-dim); }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .login-error{ background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#FCA5A5; padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:14px; }
+
+  /* ---- APP SHELL ---- */
+  #appView{ min-height:100vh; padding-bottom:40px; }
+  header{
+    position:sticky; top:0; z-index:10; background:rgba(11,14,17,0.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line); padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+  }
+  header .brand{ font-size:16px; font-weight:800; }
+  header .brand span{ background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  header .actions{ display:flex; align-items:center; gap:8px; }
+  header .user-email{ font-size:12px; color:var(--text-faint); display:none; }
+  @media (min-width:520px){ header .user-email{ display:inline; } }
+
+  main{ padding:16px; max-width:900px; margin:0 auto; }
+
+  .toolbar{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .toolbar-row{ display:flex; gap:8px; }
+  .search-input{
+    flex:1; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:11px 14px; color:var(--text); outline:none;
+  }
+  .search-input:focus{ border-color:var(--cyan); }
+  .filter-chips{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+  .chip{
+    flex-shrink:0; background:var(--panel); border:1px solid var(--line); color:var(--text-dim);
+    border-radius:999px; padding:7px 14px; font-size:13px; cursor:pointer; white-space:nowrap;
+  }
+  .chip.active{ background:var(--text); color:var(--bg); border-color:var(--text); font-weight:600; }
+
+  .product-count{ font-size:13px; color:var(--text-faint); margin-bottom:10px; }
+
+  .product-list{ display:flex; flex-direction:column; gap:10px; }
+  .product-row{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px;
+    display:flex; gap:12px; align-items:center;
+  }
+  .product-row.unavailable{ opacity:0.5; }
+  .product-thumb{
+    width:56px; height:56px; border-radius:8px; background:var(--panel-2); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .product-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .product-thumb .placeholder{ font-size:10px; color:var(--text-faint); text-align:center; }
+  .product-info{ flex:1; min-width:0; }
+  .product-info .title{ font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .product-info .meta{ font-size:12px; color:var(--text-dim); margin-top:2px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .tag-mini{ background:var(--panel-2); border-radius:5px; padding:1px 7px; font-size:11px; }
+  .tag-mini.destaque{ color:var(--amber); }
+  .tag-mini.lancamento{ color:var(--cyan); }
+  .tag-mini.off{ color:var(--red); }
+  .product-actions{ display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+  .icon-btn{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px; width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center; color:var(--text-dim); cursor:pointer;
+  }
+  .icon-btn svg{ width:16px; height:16px; }
+
+  .fab{
+    position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg,var(--cyan),var(--magenta)); color:#0B0E11; border:none;
+    font-size:28px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4); z-index:20;
+  }
+
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--text-faint); }
+
+  /* ---- FORM OVERLAY ---- */
+  #formOverlay{
+    position:fixed; inset:0; background:var(--bg); z-index:50; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .form-header{
+    position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line);
+    padding:14px 16px; display:flex; align-items:center; gap:12px; z-index:5;
+  }
+  .form-header h2{ font-size:16px; flex:1; }
+  .form-body{ padding:16px; max-width:600px; margin:0 auto; padding-bottom:100px; }
+  .form-section{ margin-bottom:22px; }
+  .form-section h3{ font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-faint); margin-bottom:10px; }
+  .form-row{ display:flex; gap:10px; }
+  .form-row .field{ flex:1; }
+  .field select{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:13px 14px; color:var(--text); outline:none; appearance:none;
+  }
+  .field textarea{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:13px 14px; color:var(--text); outline:none; resize:vertical; min-height:70px;
+  }
+  .field-hint{ font-size:12px; color:var(--text-faint); margin-top:5px; }
+  .toggle-row{
+    display:flex; align-items:center; justify-content:space-between; padding:12px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .toggle-row:last-child{ border-bottom:none; }
+  .toggle-row .label{ font-size:14px; }
+  .toggle-row .desc{ font-size:12px; color:var(--text-faint); margin-top:2px; }
+  .switch{ position:relative; width:44px; height:26px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .track{
+    position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line); border-radius:999px;
+    cursor:pointer; transition:background .15s;
+  }
+  .switch .track::before{
+    content:''; position:absolute; width:20px; height:20px; left:2px; top:2px; background:var(--text-faint);
+    border-radius:50%; transition:transform .15s, background .15s;
+  }
+  .switch input:checked + .track{ background:rgba(34,211,238,0.2); border-color:var(--cyan); }
+  .switch input:checked + .track::before{ transform:translateX(18px); background:var(--cyan); }
+
+  .size-picker{ display:flex; gap:6px; flex-wrap:wrap; }
+  .size-opt{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 14px;
+    font-size:13px; cursor:pointer; color:var(--text-dim);
+  }
+  .size-opt.active{ background:var(--text); color:var(--bg); border-color:var(--text); font-weight:600; }
+
+  .image-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+  .image-slot{
+    aspect-ratio:1; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;
+  }
+  .image-slot img{ width:100%; height:100%; object-fit:cover; }
+  .image-slot .order-badge{
+    position:absolute; top:4px; left:4px; background:rgba(0,0,0,0.7); color:var(--text); font-size:10px;
+    padding:1px 6px; border-radius:4px;
+  }
+  .image-slot .remove-btn{
+    position:absolute; top:4px; right:4px; background:rgba(239,68,68,0.85); color:#fff; border:none;
+    width:22px; height:22px; border-radius:50%; font-size:14px; line-height:1; cursor:pointer;
+  }
+  .image-slot.add-slot{ cursor:pointer; color:var(--text-faint); font-size:28px; }
+  .image-slot .uploading{ font-size:11px; color:var(--text-dim); text-align:center; padding:0 6px; }
+
+  .form-footer{
+    position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--line);
+    padding:14px 16px; display:flex; gap:10px;
+  }
+  .form-footer .btn{ flex:1; }
+
+  .toast{
+    position:relative; background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    padding:12px 20px; border-radius:10px; font-size:14px; box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    max-width:90%; text-align:center;
+  }
+  .toast.error{ border-color:rgba(239,68,68,0.4); color:#FCA5A5; }
+  .toast.success{ border-color:rgba(34,197,94,0.4); color:#86EFAC; }
+  #toastContainer{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:100;
+    display:flex; flex-direction:column-reverse; gap:8px; align-items:center;
+  }
+
+  .spinner{
+    width:16px; height:16px; border:2px solid rgba(255,255,255,0.2); border-top-color:currentColor;
+    border-radius:50%; animation:spin .7s linear infinite; display:inline-block;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .confirm-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:60; display:flex; align-items:flex-end;
+    justify-content:center;
+  }
+  .confirm-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px 16px 0 0; padding:20px;
+    width:100%; max-width:480px;
+  }
+  .confirm-box h3{ font-size:16px; margin-bottom:8px; }
+  .confirm-box p{ font-size:14px; color:var(--text-dim); margin-bottom:18px; }
+  .confirm-box .btns{ display:flex; gap:10px; }
+  .confirm-box .btns .btn{ flex:1; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- TELA DE LOGIN -->
+<!-- ============================================================ -->
+<div id="loginView">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="brand">MANTO <span>DEZ</span></div>
+      <div class="sub">Painel administrativo</div>
+    </div>
+    <div id="loginError" class="login-error hidden"></div>
+    <div class="field">
+      <label for="loginEmail">E-mail</label>
+      <input type="email" id="loginEmail" autocomplete="username" placeholder="seu@email.com">
+    </div>
+    <div class="field">
+      <label for="loginPassword">Senha</label>
+      <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- APP PRINCIPAL (depois do login) -->
+<!-- ============================================================ -->
+<div id="appView" class="hidden">
+  <header>
+    <div class="brand">MANTO <span>DEZ</span> · Painel</div>
+    <div class="actions">
+      <span class="user-email" id="userEmailLabel"></span>
+      <button class="btn btn-ghost" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <input type="text" class="search-input" id="searchInput" placeholder="Buscar produto ou time..." oninput="renderProductList()">
+      </div>
+      <div class="filter-chips" id="filterChips">
+        <div class="chip active" data-filter="todos" onclick="setFilter('todos')">Todos</div>
+        <div class="chip" data-filter="Torcedor" onclick="setFilter('Torcedor')">Torcedor</div>
+        <div class="chip" data-filter="Jogador" onclick="setFilter('Jogador')">Jogador</div>
+        <div class="chip" data-filter="Retrô" onclick="setFilter('Retrô')">Retrô</div>
+        <div class="chip" data-filter="destaque" onclick="setFilter('destaque')">★ Destaques</div>
+        <div class="chip" data-filter="lancamento" onclick="setFilter('lancamento')">🆕 Lançamentos</div>
+        <div class="chip" data-filter="inativo" onclick="setFilter('inativo')">Inativos</div>
+      </div>
+    </div>
+
+    <div class="product-count" id="productCount"></div>
+    <div class="product-list" id="productList"></div>
+  </main>
+
+  <button class="fab" onclick="openForm(null)" aria-label="Novo produto">+</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- FORMULÁRIO DE PRODUTO (criar/editar) -->
+<!-- ============================================================ -->
+<div id="formOverlay" class="hidden">
+  <div class="form-header">
+    <button class="icon-btn" onclick="closeForm()" aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 id="formTitle">Novo produto</h2>
+  </div>
+
+  <div class="form-body">
+    <div class="form-section">
+      <h3>Time e categoria</h3>
+      <div class="field">
+        <label for="fieldTeam">Time</label>
+        <select id="fieldTeam"></select>
+      </div>
+      <div class="field">
+        <label for="fieldTipo">Tipo</label>
+        <select id="fieldTipo">
+          <option value="Torcedor">Torcedor</option>
+          <option value="Jogador">Jogador</option>
+          <option value="Retrô">Retrô</option>
+        </select>
+        <div class="field-hint">Cada time só pode ter um produto de cada tipo. Escolher um tipo já usado edita o produto existente.</div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Informações do produto</h3>
+      <div class="field">
+        <label for="fieldTitulo">Título (opcional)</label>
+        <input type="text" id="fieldTitulo" placeholder="Ex.: Camisa Real Madrid Away 26/27">
+        <div class="field-hint">Se deixar em branco, usa "Nome do Time 25/26" automaticamente.</div>
+      </div>
+      <div class="field">
+        <label for="fieldSubtitulo">Subtítulo (opcional)</label>
+        <input type="text" id="fieldSubtitulo" placeholder="Ex.: Torcedor Masculina">
+      </div>
+      <div class="field">
+        <label for="fieldDescricao">Descrição (opcional)</label>
+        <textarea id="fieldDescricao" placeholder="Detalhes do produto para o cliente..."></textarea>
+      </div>
+      <div class="field">
+        <label for="fieldPreco">Preço (R$)</label>
+        <input type="number" id="fieldPreco" step="0.01" min="0" placeholder="189.90">
+      </div>
+      <div class="field">
+        <label for="fieldTags">Tags (opcional, separadas por vírgula)</label>
+        <input type="text" id="fieldTags" placeholder="Ex.: nacional, edição especial">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Tamanhos disponíveis</h3>
+      <div class="size-picker" id="sizePicker"></div>
+      <div class="field-hint">Nenhum selecionado = usa os tamanhos padrão da loja (P, M, G, GG, 2XL).</div>
+    </div>
+
+    <div class="form-section">
+      <h3>Fotos</h3>
+      <div class="image-grid" id="imageGrid"></div>
+      <input type="file" id="imageFileInput" accept="image/*" class="hidden" onchange="handleImageSelected(event)">
+      <div class="field-hint">A primeira foto é a principal. Toque em uma foto e segure para reordenar (em breve) — por agora, exclua e suba de novo na ordem certa.</div>
+    </div>
+
+    <div class="form-section">
+      <h3>Visibilidade</h3>
+      <div class="toggle-row">
+        <div>
+          <div class="label">Disponível no catálogo</div>
+          <div class="desc">Desligado = escondido dos clientes, sem excluir o produto</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="fieldDisponivel" checked><span class="track"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="label">Destaque na Home</div>
+          <div class="desc">Aparece na seção "Destaques"</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="fieldDestaque"><span class="track"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="label">Lançamento</div>
+          <div class="desc">Aparece na seção "Lançamentos"</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="fieldLancamento"><span class="track"></span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-footer">
+    <button class="btn btn-secondary" onclick="closeForm()">Cancelar</button>
+    <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">Salvar produto</button>
+  </div>
+</div>
+
+<!-- Confirmação de exclusão -->
+<div id="confirmOverlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Excluir produto?</h3>
+    <p id="confirmText">Essa ação não pode ser desfeita.</p>
+    <div class="btns">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" id="confirmActionBtn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ============================================================
+  // 🔌 CONEXÃO COM O BANCO (mesma configuração do catálogo público)
+  // ============================================================
+  const SUPABASE_CONFIG = {
+    url: "https://stypkgswlkqcuhicnyye.supabase.co",
+    publishableKey: "sb_publishable_4RYBlS7KjP1FIWQJg88MEg_ugXGFEjI"
+  };
+  const supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.publishableKey);
+
+  const SIZES = ["P","M","G","GG","2XL"];
+  const STORAGE_BUCKET = "produtos";
+
+  let currentUser = null;
+  let TEAMS_CACHE = [];
+  let PRODUCTS_CACHE = [];
+  let currentFilter = "todos";
+  let editingProductId = null; // null = criando produto novo
+  let formImages = []; // [{url, ordem, isNew, file}]
+  let selectedSizes = [];
+
+  // ============================================================
+  // AUTENTICAÇÃO
+  // ============================================================
+  function showToast(msg, type){
+    const el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    el.textContent = msg;
+    document.getElementById('toastContainer').appendChild(el);
+    // Erros ficam mais tempo na tela (mais importante conseguir ler)
+    const duration = type === 'error' ? 8000 : 3500;
+    setTimeout(() => el.remove(), duration);
+  }
+
+  async function doLogin(){
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errBox = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+    errBox.classList.add('hidden');
+
+    if(!email || !password){
+      errBox.textContent = 'Preencha e-mail e senha.';
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+
+    if(error){
+      errBox.textContent = 'E-mail ou senha incorretos.';
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    currentUser = data.user;
+    await enterApp();
+  }
+
+  async function doLogout(){
+    await supabaseClient.auth.signOut();
+    currentUser = null;
+    document.getElementById('appView').classList.add('hidden');
+    document.getElementById('loginView').classList.remove('hidden');
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+  }
+
+  async function enterApp(){
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('appView').classList.remove('hidden');
+    document.getElementById('userEmailLabel').textContent = currentUser.email;
+    await Promise.all([loadTeams(), loadProducts()]);
+    renderProductList();
+  }
+
+  // Ao carregar a página, verifica se já existe uma sessão válida (evita pedir login de novo toda hora)
+  async function checkExistingSession(){
+    const { data } = await supabaseClient.auth.getSession();
+    if(data && data.session && data.session.user){
+      currentUser = data.session.user;
+      await enterApp();
+    }
+  }
+  checkExistingSession();
+
+  // ============================================================
+  // CARREGAMENTO DE DADOS
+  // ============================================================
+  async function loadTeams(){
+    const { data, error } = await supabaseClient
+      .from('teams')
+      .select('id, nome')
+      .order('nome', { ascending: true });
+    if(error){ showToast('Erro ao carregar times: ' + error.message, 'error'); return; }
+    TEAMS_CACHE = data || [];
+    const select = document.getElementById('fieldTeam');
+    select.innerHTML = TEAMS_CACHE.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+  }
+
+  async function loadProducts(){
+    const { data, error } = await supabaseClient
+      .from('products')
+      .select('*, teams(id, nome), product_images(id, url, ordem)')
+      .order('created_at', { ascending: false });
+    if(error){ showToast('Erro ao carregar produtos: ' + error.message, 'error'); return; }
+    PRODUCTS_CACHE = data || [];
+  }
+
+  // ============================================================
+  // LISTAGEM / FILTROS
+  // ============================================================
+  function setFilter(f){
+    currentFilter = f;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+    renderProductList();
+  }
+
+  function renderProductList(){
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    let list = PRODUCTS_CACHE.slice();
+
+    if(currentFilter === 'destaque') list = list.filter(p => p.destaque);
+    else if(currentFilter === 'lancamento') list = list.filter(p => p.lancamento);
+    else if(currentFilter === 'inativo') list = list.filter(p => !p.disponivel);
+    else if(currentFilter !== 'todos') list = list.filter(p => p.tipo === currentFilter);
+
+    if(query){
+      list = list.filter(p =>
+        p.titulo.toLowerCase().includes(query) ||
+        (p.teams && p.teams.nome.toLowerCase().includes(query))
+      );
+    }
+
+    document.getElementById('productCount').textContent = list.length + (list.length === 1 ? ' produto' : ' produtos');
+    const container = document.getElementById('productList');
+
+    if(list.length === 0){
+      container.innerHTML = '<div class="empty-state">Nenhum produto encontrado.<br>Toque em "+" para cadastrar o primeiro.</div>';
+      return;
+    }
+
+    container.innerHTML = list.map(p => {
+      const photo = (p.product_images && p.product_images.length)
+        ? p.product_images.slice().sort((a,b)=>a.ordem-b.ordem)[0].url
+        : null;
+      const thumb = photo
+        ? `<img src="${photo}" alt="">`
+        : `<div class="placeholder">sem foto</div>`;
+      const tags = [];
+      if(!p.disponivel) tags.push('<span class="tag-mini off">Inativo</span>');
+      if(p.destaque) tags.push('<span class="tag-mini destaque">★ Destaque</span>');
+      if(p.lancamento) tags.push('<span class="tag-mini lancamento">🆕 Lançamento</span>');
+      return `
+        <div class="product-row ${!p.disponivel ? 'unavailable' : ''}">
+          <div class="product-thumb">${thumb}</div>
+          <div class="product-info" onclick="openForm('${p.id}')">
+            <div class="title">${p.titulo}</div>
+            <div class="meta">
+              <span>${p.teams ? p.teams.nome : '—'}</span>
+              <span class="tag-mini">${p.tipo}</span>
+              <span>${fmt(p.preco)}</span>
+              ${tags.join('')}
+            </div>
+          </div>
+          <div class="product-actions">
+            <div class="icon-btn" onclick="duplicateProduct('${p.id}')" aria-label="Duplicar" title="Duplicar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </div>
+            <div class="icon-btn" onclick="confirmDelete('${p.id}')" aria-label="Excluir" title="Excluir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function fmt(v){ return "R$ " + parseFloat(v).toFixed(2).replace(".", ","); }
+
+  // ============================================================
+  // FORMULÁRIO (criar / editar)
+  // ============================================================
+  function renderSizePicker(){
+    const picker = document.getElementById('sizePicker');
+    picker.innerHTML = SIZES.map(s =>
+      `<div class="size-opt ${selectedSizes.includes(s) ? 'active' : ''}" onclick="toggleSize('${s}')">${s}</div>`
+    ).join('');
+  }
+  function toggleSize(s){
+    if(selectedSizes.includes(s)) selectedSizes = selectedSizes.filter(x => x !== s);
+    else selectedSizes.push(s);
+    renderSizePicker();
+  }
+
+  function renderImageGrid(){
+    const grid = document.getElementById('imageGrid');
+    let html = formImages.map((img, i) => `
+      <div class="image-slot">
+        <span class="order-badge">${i === 0 ? 'Principal' : i + 1}</span>
+        ${img.uploading
+          ? '<div class="uploading"><span class="spinner"></span></div>'
+          : `<img src="${img.url}" alt=""><button class="remove-btn" onclick="removeImage(${i})">×</button>`}
+      </div>
+    `).join('');
+    if(formImages.length < 6){
+      html += `<div class="image-slot add-slot" onclick="document.getElementById('imageFileInput').click()">+</div>`;
+    }
+    grid.innerHTML = html;
+  }
+
+  function openForm(productId){
+    editingProductId = productId;
+    const product = productId ? PRODUCTS_CACHE.find(p => p.id === productId) : null;
+
+    document.getElementById('formTitle').textContent = product ? 'Editar produto' : 'Novo produto';
+    document.getElementById('fieldTeam').value = product ? product.teams.id : (TEAMS_CACHE[0] ? TEAMS_CACHE[0].id : '');
+    document.getElementById('fieldTipo').value = product ? product.tipo : 'Torcedor';
+    document.getElementById('fieldTitulo').value = product ? (product.titulo || '') : '';
+    document.getElementById('fieldSubtitulo').value = product ? (product.subtitulo || '') : '';
+    document.getElementById('fieldDescricao').value = product ? (product.descricao || '') : '';
+    document.getElementById('fieldPreco').value = product ? product.preco : '';
+    document.getElementById('fieldTags').value = product && product.tags ? product.tags.join(', ') : '';
+    document.getElementById('fieldDisponivel').checked = product ? product.disponivel : true;
+    document.getElementById('fieldDestaque').checked = product ? !!product.destaque : false;
+    document.getElementById('fieldLancamento').checked = product ? !!product.lancamento : false;
+
+    selectedSizes = (product && product.tamanhos) ? product.tamanhos.slice() : [];
+    renderSizePicker();
+
+    formImages = (product && product.product_images)
+      ? product.product_images.slice().sort((a,b)=>a.ordem-b.ordem).map(img => ({ url: img.url, ordem: img.ordem, isNew: false, id: img.id }))
+      : [];
+    renderImageGrid();
+
+    document.getElementById('formOverlay').classList.remove('hidden');
+    window.scrollTo(0,0);
+  }
+
+  function closeForm(){
+    document.getElementById('formOverlay').classList.add('hidden');
+    editingProductId = null;
+  }
+
+  // Gera o ID no mesmo formato usado pelo catálogo público: "NomeDoTime||Tipo"
+  function buildProductId(teamNome, tipo){
+    return teamNome + "||" + tipo;
+  }
+
+  async function saveProduct(){
+    const teamId = document.getElementById('fieldTeam').value;
+    const team = TEAMS_CACHE.find(t => t.id === teamId);
+    const tipo = document.getElementById('fieldTipo').value;
+    const preco = parseFloat(document.getElementById('fieldPreco').value);
+
+    if(!team){ showToast('Selecione um time.', 'error'); return; }
+    if(isNaN(preco) || preco <= 0){ showToast('Informe um preço válido.', 'error'); return; }
+
+    const titulo = document.getElementById('fieldTitulo').value.trim() || (team.nome + ' 25/26');
+    const subtitulo = document.getElementById('fieldSubtitulo').value.trim() || null;
+    const descricao = document.getElementById('fieldDescricao').value.trim() || null;
+    const tagsRaw = document.getElementById('fieldTags').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const disponivel = document.getElementById('fieldDisponivel').checked;
+    const destaque = document.getElementById('fieldDestaque').checked;
+    const lancamento = document.getElementById('fieldLancamento').checked;
+    const tamanhos = selectedSizes.length ? selectedSizes : null;
+
+    const id = editingProductId || buildProductId(team.nome, tipo);
+
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner"></span>';
+
+    const { error } = await supabaseClient
+      .from('products')
+      .upsert({
+        id, team_id: team.id, tipo, titulo, subtitulo, descricao, preco,
+        tamanhos, tags, disponivel, destaque, lancamento
+      });
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Salvar produto';
+
+    if(error){
+      showToast('Erro ao salvar: ' + error.message, 'error');
+      return;
+    }
+
+    // Sobe as fotos novas que ainda não foram enviadas ao Storage
+    for(let i = 0; i < formImages.length; i++){
+      const img = formImages[i];
+      if(img.isNew && img.file){
+        await uploadImageFile(id, img.file, i);
+      } else if(!img.isNew) {
+        // Garante que a ordem no banco bate com a ordem atual na tela
+        await supabaseClient.from('product_images').update({ ordem: i }).eq('id', img.id);
+      }
+    }
+
+    showToast('Produto salvo com sucesso!', 'success');
+    closeForm();
+    await loadProducts();
+    renderProductList();
+  }
+
+  // ============================================================
+  // IMAGENS
+  // ============================================================
+  function handleImageSelected(event){
+    const file = event.target.files[0];
+    if(!file) return;
+    const localUrl = URL.createObjectURL(file);
+    formImages.push({ url: localUrl, ordem: formImages.length, isNew: true, file });
+    renderImageGrid();
+    event.target.value = '';
+  }
+
+  function removeImage(index){
+    const img = formImages[index];
+    formImages.splice(index, 1);
+    renderImageGrid();
+    // Se a imagem já existia no banco, remove de lá também
+    if(img && !img.isNew && img.id){
+      supabaseClient.from('product_images').delete().eq('id', img.id);
+    }
+  }
+
+  async function uploadImageFile(productId, file, ordem){
+    const ext = file.name.split('.').pop();
+    const path = `${productId.replace(/\|\|/g, '-').replace(/\s+/g, '-')}-${ordem}-${Date.now()}.${ext}`;
+
+    // DEBUG temporário: confirma se existe sessão válida na hora do upload
+    const { data: sessionData } = await supabaseClient.auth.getSession();
+    const hasSession = !!(sessionData && sessionData.session && sessionData.session.access_token);
+    console.log('DEBUG sessão antes do upload:', hasSession, sessionData && sessionData.session && sessionData.session.user && sessionData.session.user.email);
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from(STORAGE_BUCKET)
+      .upload(path, file, { upsert: true });
+
+    if(uploadError){
+      showToast('Erro ao enviar foto (sessão ativa: ' + hasSession + '): ' + uploadError.message, 'error');
+      return;
+    }
+
+    const { data: publicUrlData } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+    const publicUrl = publicUrlData.publicUrl;
+
+    const { error: dbError } = await supabaseClient.from('product_images')
+      .upsert({ product_id: productId, url: publicUrl, ordem }, { onConflict: 'product_id,ordem' });
+
+    if(dbError){
+      showToast('Foto enviada, mas erro ao salvar no banco: ' + dbError.message, 'error');
+    }
+  }
+
+  // ============================================================
+  // DUPLICAR / EXCLUIR
+  // ============================================================
+  async function duplicateProduct(id){
+    const product = PRODUCTS_CACHE.find(p => p.id === id);
+    if(!product) return;
+    showToast('Duplicando produto...', null);
+    openForm(id);
+    // Ao duplicar, força escolher um TIPO diferente (já que o ID é único por time+tipo)
+    editingProductId = null;
+    document.getElementById('formTitle').textContent = 'Duplicar produto (escolha outro tipo)';
+  }
+
+  function confirmDelete(id){
+    const product = PRODUCTS_CACHE.find(p => p.id === id);
+    document.getElementById('confirmTitle').textContent = 'Excluir produto?';
+    document.getElementById('confirmText').textContent = `"${product ? product.titulo : id}" será excluído permanentemente, junto com as fotos associadas. Essa ação não pode ser desfeita.`;
+    document.getElementById('confirmActionBtn').onclick = () => deleteProduct(id);
+    document.getElementById('confirmOverlay').classList.remove('hidden');
+  }
+  function closeConfirm(){
+    document.getElementById('confirmOverlay').classList.add('hidden');
+  }
+  async function deleteProduct(id){
+    const { error } = await supabaseClient.from('products').delete().eq('id', id);
+    closeConfirm();
+    if(error){ showToast('Erro ao excluir: ' + error.message, 'error'); return; }
+    showToast('Produto excluído.', 'success');
+    await loadProducts();
+    renderProductList();
+  }
+</script>
+</body>
+</html>
