@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manto Dez Sports — Painel</title>
+<style>
+  :root{
+    --bg:#0B0E11; --panel:#12161B; --panel-2:#181D24; --line:#242B33;
+    --text:#F4F6F7; --text-dim:#9AA5B1; --text-faint:#5C6773;
+    --cyan:#22D3EE; --magenta:#E844C4; --green:#22C55E; --red:#EF4444; --amber:#F59E0B;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh; -webkit-tap-highlight-color:transparent;
+  }
+  input, select, textarea, button{ font-family:inherit; font-size:15px; }
+  .hidden{ display:none !important; }
+
+  /* ---- LOGIN ---- */
+  #loginView{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .login-box{ width:100%; max-width:360px; }
+  .login-logo{ text-align:center; margin-bottom:32px; }
+  .login-logo .brand{ font-size:24px; font-weight:800; letter-spacing:-0.02em; }
+  .login-logo .brand span{ background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .login-logo .sub{ font-size:13px; color:var(--text-dim); margin-top:4px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:13px; color:var(--text-dim); margin-bottom:6px; }
+  .field input{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:13px 14px; color:var(--text); outline:none;
+  }
+  .field input:focus{ border-color:var(--cyan); }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:none; border-radius:10px; padding:13px 18px; font-weight:600; cursor:pointer;
+    transition:opacity .15s;
+  }
+  .btn:active{ opacity:0.8; }
+  .btn-primary{ background:linear-gradient(90deg,var(--cyan),var(--magenta)); color:#0B0E11; width:100%; }
+  .btn-secondary{ background:var(--panel-2); color:var(--text); border:1px solid var(--line); }
+  .btn-danger{ background:rgba(239,68,68,0.12); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+  .btn-ghost{ background:transparent; color:var(--text-dim); }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .login-error{ background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#FCA5A5; padding:10px 12px; border-radius:8px; font-size:13px; margin-bottom:14px; }
+
+  /* ---- APP SHELL ---- */
+  #appView{ min-height:100vh; padding-bottom:40px; }
+  header{
+    position:sticky; top:0; z-index:10; background:rgba(11,14,17,0.92); backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line); padding:14px 16px; display:flex; align-items:center; justify-content:space-between;
+  }
+  header .brand{ font-size:16px; font-weight:800; }
+  header .brand span{ background:linear-gradient(90deg,var(--cyan),var(--magenta)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  header .actions{ display:flex; align-items:center; gap:8px; }
+  header .user-email{ font-size:12px; color:var(--text-faint); display:none; }
+  @media (min-width:520px){ header .user-email{ display:inline; } }
+
+  main{ padding:16px; max-width:900px; margin:0 auto; }
+
+  .toolbar{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .toolbar-row{ display:flex; gap:8px; }
+  .search-input{
+    flex:1; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:11px 14px; color:var(--text); outline:none;
+  }
+  .search-input:focus{ border-color:var(--cyan); }
+  .filter-chips{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+  .chip{
+    flex-shrink:0; background:var(--panel); border:1px solid var(--line); color:var(--text-dim);
+    border-radius:999px; padding:7px 14px; font-size:13px; cursor:pointer; white-space:nowrap;
+  }
+  .chip.active{ background:var(--text); color:var(--bg); border-color:var(--text); font-weight:600; }
+
+  .product-count{ font-size:13px; color:var(--text-faint); margin-bottom:10px; }
+
+  .product-list{ display:flex; flex-direction:column; gap:10px; }
+  .product-row{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px;
+    display:flex; gap:12px; align-items:center;
+  }
+  .product-row.unavailable{ opacity:0.5; }
+  .product-thumb{
+    width:56px; height:56px; border-radius:8px; background:var(--panel-2); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  .product-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .product-thumb .placeholder{ font-size:10px; color:var(--text-faint); text-align:center; }
+  .product-info{ flex:1; min-width:0; }
+  .product-info .title{ font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .product-info .meta{ font-size:12px; color:var(--text-dim); margin-top:2px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .tag-mini{ background:var(--panel-2); border-radius:5px; padding:1px 7px; font-size:11px; }
+  .tag-mini.destaque{ color:var(--amber); }
+  .tag-mini.lancamento{ color:var(--cyan); }
+  .tag-mini.off{ color:var(--red); }
+  .product-actions{ display:flex; flex-direction:column; gap:6px; flex-shrink:0; }
+  .icon-btn{
+    background:var(--panel-2); border:1px solid var(--line); border-radius:8px; width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center; color:var(--text-dim); cursor:pointer;
+  }
+  .icon-btn svg{ width:16px; height:16px; }
+
+  .fab{
+    position:fixed; right:20px; bottom:20px; width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg,var(--cyan),var(--magenta)); color:#0B0E11; border:none;
+    font-size:28px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4); z-index:20;
+  }
+
+  .empty-state{ text-align:center; padding:60px 20px; color:var(--text-faint); }
+
+  /* ---- FORM OVERLAY ---- */
+  #formOverlay, #heroOverlay{
+    position:fixed; inset:0; background:var(--bg); z-index:50; overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .form-header{
+    position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line);
+    padding:14px 16px; display:flex; align-items:center; gap:12px; z-index:5;
+  }
+  .form-header h2{ font-size:16px; flex:1; }
+  .form-body{ padding:16px; max-width:600px; margin:0 auto; padding-bottom:100px; }
+  .form-section{ margin-bottom:22px; }
+  .form-section h3{ font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-faint); margin-bottom:10px; }
+  .form-row{ display:flex; gap:10px; }
+  .form-row .field{ flex:1; }
+  .field select{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:13px 14px; color:var(--text); outline:none; appearance:none;
+  }
+  .field textarea{
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:13px 14px; color:var(--text); outline:none; resize:vertical; min-height:70px;
+  }
+  .field-hint{ font-size:12px; color:var(--text-faint); margin-top:5px; }
+  .hero-video-tip{
+    display:flex; align-items:flex-start; gap:10px;
+    background:rgba(34,211,238,0.08); border:1px solid rgba(34,211,238,0.3);
+    border-radius:10px; padding:12px 14px; margin:10px 0 14px;
+    font-size:12.5px; color:var(--text-dim); line-height:1.5;
+  }
+  .hero-video-tip svg{ color:var(--cyan); flex-shrink:0; margin-top:1px; }
+  .hero-video-tip strong{ color:var(--text); }
+  .toggle-row{
+    display:flex; align-items:center; justify-content:space-between; padding:12px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .toggle-row:last-child{ border-bottom:none; }
+  .toggle-row .label{ font-size:14px; }
+  .toggle-row .desc{ font-size:12px; color:var(--text-faint); margin-top:2px; }
+  .switch{ position:relative; width:44px; height:26px; flex-shrink:0; }
+  .switch input{ opacity:0; width:0; height:0; }
+  .switch .track{
+    position:absolute; inset:0; background:var(--panel-2); border:1px solid var(--line); border-radius:999px;
+    cursor:pointer; transition:background .15s;
+  }
+  .switch .track::before{
+    content:''; position:absolute; width:20px; height:20px; left:2px; top:2px; background:var(--text-faint);
+    border-radius:50%; transition:transform .15s, background .15s;
+  }
+  .switch input:checked + .track{ background:rgba(34,211,238,0.2); border-color:var(--cyan); }
+  .switch input:checked + .track::before{ transform:translateX(18px); background:var(--cyan); }
+
+  .size-picker{ display:flex; gap:6px; flex-wrap:wrap; }
+  .size-opt{
+    background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 14px;
+    font-size:13px; cursor:pointer; color:var(--text-dim);
+  }
+  .size-opt.active{ background:var(--text); color:var(--bg); border-color:var(--text); font-weight:600; }
+
+  .image-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px; }
+  .image-slot{
+    aspect-ratio:1; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center;
+  }
+  .image-slot img{ width:100%; height:100%; object-fit:cover; }
+  .image-slot video{ width:100%; height:100%; object-fit:cover; }
+  .image-slot .media-badge{
+    position:absolute; bottom:4px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.75); color:var(--cyan); font-size:9px;
+    padding:2px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:0.05em;
+  }
+  .image-slot .order-badge{
+    position:absolute; top:4px; left:4px; background:rgba(0,0,0,0.7); color:var(--text); font-size:10px;
+    padding:1px 6px; border-radius:4px;
+  }
+  .image-slot .remove-btn{
+    position:absolute; top:4px; right:4px; background:rgba(239,68,68,0.85); color:#fff; border:none;
+    width:22px; height:22px; border-radius:50%; font-size:14px; line-height:1; cursor:pointer;
+  }
+  .image-slot .move-btns{
+    position:absolute; bottom:4px; left:4px; right:4px; display:flex; justify-content:space-between;
+  }
+  .image-slot .move-btn{
+    background:rgba(0,0,0,0.7); color:var(--text); border:none; width:26px; height:26px;
+    border-radius:6px; font-size:16px; line-height:1; cursor:pointer;
+  }
+  .image-slot .move-btn:disabled{ opacity:0.3; cursor:not-allowed; }
+  .image-slot.add-slot{ cursor:pointer; color:var(--text-faint); font-size:28px; border-style:dashed; }
+  .add-slot-inner{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .add-slot-plus{ font-size:26px; line-height:1; color:var(--cyan); }
+  .add-slot-label{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.03em; color:var(--text-faint); text-align:center; padding:0 4px; }
+  .image-slot .uploading{ font-size:11px; color:var(--text-dim); text-align:center; padding:0 6px; }
+
+  .form-footer{
+    position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--line);
+    padding:14px 16px; display:flex; gap:10px;
+  }
+  .form-footer .btn{ flex:1; }
+
+  .toast{
+    position:relative; background:var(--panel-2); border:1px solid var(--line); color:var(--text);
+    padding:12px 20px; border-radius:10px; font-size:14px; box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    max-width:90%; text-align:center;
+  }
+  .toast.error{ border-color:rgba(239,68,68,0.4); color:#FCA5A5; }
+  .toast.success{ border-color:rgba(34,197,94,0.4); color:#86EFAC; }
+  #toastContainer{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:100;
+    display:flex; flex-direction:column-reverse; gap:8px; align-items:center;
+  }
+
+  .spinner{
+    width:16px; height:16px; border:2px solid rgba(255,255,255,0.2); border-top-color:currentColor;
+    border-radius:50%; animation:spin .7s linear infinite; display:inline-block;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .confirm-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:60; display:flex; align-items:flex-end;
+    justify-content:center;
+  }
+  .confirm-box{
+    background:var(--panel); border:1px solid var(--line); border-radius:16px 16px 0 0; padding:20px;
+    width:100%; max-width:480px;
+  }
+  .confirm-box h3{ font-size:16px; margin-bottom:8px; }
+  .confirm-box p{ font-size:14px; color:var(--text-dim); margin-bottom:18px; }
+  .confirm-box .btns{ display:flex; gap:10px; }
+  .confirm-box .btns .btn{ flex:1; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- TELA DE LOGIN -->
+<!-- ============================================================ -->
+<div id="loginView">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="brand">MANTO <span>DEZ</span></div>
+      <div class="sub">Painel administrativo</div>
+    </div>
+    <div id="loginError" class="login-error hidden"></div>
+    <div class="field">
+      <label for="loginEmail">E-mail</label>
+      <input type="email" id="loginEmail" autocomplete="username" placeholder="seu@email.com">
+    </div>
+    <div class="field">
+      <label for="loginPassword">Senha</label>
+      <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- APP PRINCIPAL (depois do login) -->
+<!-- ============================================================ -->
+<div id="appView" class="hidden">
+  <header>
+    <div class="brand">MANTO <span>DEZ</span> · Painel</div>
+    <div class="actions">
+      <span class="user-email" id="userEmailLabel"></span>
+      <button class="btn btn-secondary" onclick="openHeroOverlay()">Banner Hero</button>
+      <button class="btn btn-ghost" onclick="doLogout()">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <input type="text" class="search-input" id="searchInput" placeholder="Buscar produto ou time..." oninput="renderProductList()">
+      </div>
+      <div class="filter-chips" id="filterChips">
+        <div class="chip active" data-filter="todos" onclick="setFilter('todos')">Todos</div>
+        <div class="chip" data-filter="Torcedor" onclick="setFilter('Torcedor')">Torcedor</div>
+        <div class="chip" data-filter="Jogador" onclick="setFilter('Jogador')">Jogador</div>
+        <div class="chip" data-filter="Retrô" onclick="setFilter('Retrô')">Retrô</div>
+        <div class="chip" data-filter="Kit Infantil" onclick="setFilter('Kit Infantil')">Kit Infantil</div>
+        <div class="chip" data-filter="Feminina" onclick="setFilter('Feminina')">Feminina</div>
+        <div class="chip" data-filter="destaque" onclick="setFilter('destaque')">★ Destaques</div>
+        <div class="chip" data-filter="lancamento" onclick="setFilter('lancamento')">🆕 Lançamentos</div>
+        <div class="chip" data-filter="inativo" onclick="setFilter('inativo')">Inativos</div>
+      </div>
+    </div>
+
+    <div class="product-count" id="productCount"></div>
+    <div class="product-list" id="productList"></div>
+  </main>
+
+  <button class="fab" onclick="openForm(null)" aria-label="Novo produto">+</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- FORMULÁRIO DE PRODUTO (criar/editar) -->
+<!-- ============================================================ -->
+<div id="formOverlay" class="hidden">
+  <div class="form-header">
+    <button class="icon-btn" onclick="closeForm()" aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 id="formTitle">Novo produto</h2>
+  </div>
+
+  <div class="form-body">
+    <div class="form-section">
+      <h3>Time e categoria</h3>
+      <div class="field">
+        <label for="fieldTeam">Time</label>
+        <select id="fieldTeam" onchange="checkCollisionWarning()"></select>
+      </div>
+      <div class="field">
+        <label for="fieldTipo">Tipo</label>
+        <select id="fieldTipo" onchange="checkCollisionWarning()">
+          <option value="Torcedor">Torcedor</option>
+          <option value="Jogador">Jogador</option>
+          <option value="Retrô">Retrô</option>
+          <option value="Kit Infantil">Kit Infantil</option>
+          <option value="Feminina">Feminina</option>
+        </select>
+        <div class="field-hint">Você pode cadastrar quantos produtos quiser do mesmo Time + Tipo (ex.: várias camisas "Torcedor" diferentes do mesmo time).</div>
+        <div class="field-hint" id="collisionWarning" style="display:none; color:var(--amber);"></div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Informações do produto</h3>
+      <div class="field">
+        <label for="fieldTitulo">Título (opcional)</label>
+        <input type="text" id="fieldTitulo" placeholder="Ex.: Camisa Real Madrid Away 26/27">
+        <div class="field-hint">Se deixar em branco, usa "Nome do Time 25/26" automaticamente.</div>
+      </div>
+      <div class="field">
+        <label for="fieldSubtitulo">Subtítulo (opcional)</label>
+        <input type="text" id="fieldSubtitulo" placeholder="Ex.: Torcedor Masculina">
+      </div>
+      <div class="field">
+        <label for="fieldDescricao">Descrição (opcional)</label>
+        <textarea id="fieldDescricao" placeholder="Detalhes do produto para o cliente..."></textarea>
+      </div>
+      <div class="field">
+        <label for="fieldPreco">Preço (R$)</label>
+        <input type="number" id="fieldPreco" step="0.01" min="0" placeholder="189.90">
+      </div>
+      <div class="field">
+        <label for="fieldTags">Tags (opcional, separadas por vírgula)</label>
+        <input type="text" id="fieldTags" placeholder="Ex.: nacional, edição especial">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3>Tamanhos disponíveis</h3>
+      <div class="size-picker" id="sizePicker"></div>
+      <div class="field-hint">Nenhum selecionado = usa os tamanhos padrão da loja (P, M, G, GG, 2XL).</div>
+    </div>
+
+    <div class="form-section">
+      <h3>Fotos</h3>
+      <div class="image-grid" id="imageGrid"></div>
+      <input type="file" id="imageFileInput" accept="image/*" multiple class="hidden" onchange="handleImageSelected(event)">
+      <div class="field-hint">Você pode selecionar várias fotos de uma vez (até 6). A primeira é a foto principal — use as setas ‹ › em cada foto para mudar a ordem.</div>
+    </div>
+
+    <div class="form-section">
+      <h3>Visibilidade</h3>
+      <div class="toggle-row">
+        <div>
+          <div class="label">Disponível no catálogo</div>
+          <div class="desc">Desligado = escondido dos clientes, sem excluir o produto</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="fieldDisponivel" checked><span class="track"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="label">Destaque na Home</div>
+          <div class="desc">Aparece na seção "Destaques"</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="fieldDestaque"><span class="track"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="label">Lançamento</div>
+          <div class="desc">Aparece na seção "Lançamentos"</div>
+        </div>
+        <label class="switch"><input type="checkbox" id="fieldLancamento"><span class="track"></span></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-footer">
+    <button class="btn btn-secondary" onclick="closeForm()">Cancelar</button>
+    <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">Salvar produto</button>
+  </div>
+</div>
+
+<!-- Confirmação de exclusão -->
+<!-- ============================================================ -->
+<!-- BANNER HERO (fotos que giram na Home) -->
+<!-- ============================================================ -->
+<div id="heroOverlay" class="hidden">
+  <div class="form-header">
+    <button class="icon-btn" onclick="closeHeroOverlay()" aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h2>Banner Hero</h2>
+  </div>
+  <div class="form-body">
+    <div class="form-section">
+      <h3>Fotos e vídeos do banner</h3>
+      <div class="hero-video-tip">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="15" height="14" rx="2"/><polygon points="16 9 22 5 22 19 16 15" /></svg>
+        <div>
+          <strong>Aceita vídeo também.</strong> Toque no "+" abaixo e escolha um arquivo .mp4 (até 10MB) — ele toca sozinho, sem som e em loop no banner da Home, exatamente como uma foto.
+        </div>
+      </div>
+      <div class="field-hint" style="margin-bottom:12px;">Você pode selecionar vários de uma vez. Cada ação (adicionar, mover, excluir) salva na hora — não precisa de botão "Salvar".</div>
+      <div class="image-grid" id="heroImageGrid"></div>
+      <input type="file" id="heroFileInput" accept="image/*,video/mp4,video/webm,video/quicktime" multiple class="hidden" onchange="handleHeroFileSelected(event)">
+    </div>
+  </div>
+</div>
+
+<div id="confirmOverlay" class="confirm-overlay hidden">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Excluir produto?</h3>
+    <p id="confirmText">Essa ação não pode ser desfeita.</p>
+    <div class="btns">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" id="confirmActionBtn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ============================================================
+  // 🔌 CONEXÃO COM O BANCO (mesma configuração do catálogo público)
+  // ============================================================
+  const SUPABASE_CONFIG = {
+    url: "https://stypkgswlkqcuhicnyye.supabase.co",
+    publishableKey: "sb_publishable_4RYBlS7KjP1FIWQJg88MEg_ugXGFEjI"
+  };
+  const supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.publishableKey);
+
+  const SIZES = ["P","M","G","GG","2XL"];
+  const STORAGE_BUCKET = "produtos";
+
+  let currentUser = null;
+  let TEAMS_CACHE = [];
+  let PRODUCTS_CACHE = [];
+  let currentFilter = "todos";
+  let editingProductId = null; // null = criando produto novo
+  let formImages = []; // [{url, ordem, isNew, file}]
+  let selectedSizes = [];
+
+  // ============================================================
+  // AUTENTICAÇÃO
+  // ============================================================
+  function showToast(msg, type){
+    const el = document.createElement('div');
+    el.className = 'toast' + (type ? ' ' + type : '');
+    el.textContent = msg;
+    document.getElementById('toastContainer').appendChild(el);
+    // Erros ficam mais tempo na tela (mais importante conseguir ler)
+    const duration = type === 'error' ? 8000 : 3500;
+    setTimeout(() => el.remove(), duration);
+  }
+
+  async function doLogin(){
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errBox = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+    errBox.classList.add('hidden');
+
+    if(!email || !password){
+      errBox.textContent = 'Preencha e-mail e senha.';
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+
+    if(error){
+      errBox.textContent = 'E-mail ou senha incorretos.';
+      errBox.classList.remove('hidden');
+      return;
+    }
+
+    currentUser = data.user;
+    await enterApp();
+  }
+
+  async function doLogout(){
+    await supabaseClient.auth.signOut();
+    currentUser = null;
+    document.getElementById('appView').classList.add('hidden');
+    document.getElementById('loginView').classList.remove('hidden');
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+  }
+
+  async function enterApp(){
+    document.getElementById('loginView').classList.add('hidden');
+    document.getElementById('appView').classList.remove('hidden');
+    document.getElementById('userEmailLabel').textContent = currentUser.email;
+    await Promise.all([loadTeams(), loadProducts()]);
+    renderProductList();
+  }
+
+  // Ao carregar a página, verifica se já existe uma sessão válida (evita pedir login de novo toda hora)
+  async function checkExistingSession(){
+    const { data } = await supabaseClient.auth.getSession();
+    if(data && data.session && data.session.user){
+      currentUser = data.session.user;
+      await enterApp();
+    }
+  }
+  checkExistingSession();
+
+  // ============================================================
+  // CARREGAMENTO DE DADOS
+  // ============================================================
+  async function loadTeams(){
+    const { data, error } = await supabaseClient
+      .from('teams')
+      .select('id, nome')
+      .order('nome', { ascending: true });
+    if(error){ showToast('Erro ao carregar times: ' + error.message, 'error'); return; }
+    TEAMS_CACHE = data || [];
+    const select = document.getElementById('fieldTeam');
+    select.innerHTML = TEAMS_CACHE.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+  }
+
+  async function loadProducts(){
+    const { data, error } = await supabaseClient
+      .from('products')
+      .select('*, teams(id, nome), product_images(id, url, ordem)')
+      .order('created_at', { ascending: false });
+    if(error){ showToast('Erro ao carregar produtos: ' + error.message, 'error'); return; }
+    PRODUCTS_CACHE = data || [];
+  }
+
+  // ============================================================
+  // LISTAGEM / FILTROS
+  // ============================================================
+  function setFilter(f){
+    currentFilter = f;
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.filter === f));
+    renderProductList();
+  }
+
+  function renderProductList(){
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    let list = PRODUCTS_CACHE.slice();
+
+    if(currentFilter === 'destaque') list = list.filter(p => p.destaque);
+    else if(currentFilter === 'lancamento') list = list.filter(p => p.lancamento);
+    else if(currentFilter === 'inativo') list = list.filter(p => !p.disponivel);
+    else if(currentFilter !== 'todos') list = list.filter(p => p.tipo === currentFilter);
+
+    if(query){
+      list = list.filter(p =>
+        p.titulo.toLowerCase().includes(query) ||
+        (p.teams && p.teams.nome.toLowerCase().includes(query))
+      );
+    }
+
+    document.getElementById('productCount').textContent = list.length + (list.length === 1 ? ' produto' : ' produtos');
+    const container = document.getElementById('productList');
+
+    if(list.length === 0){
+      container.innerHTML = '<div class="empty-state">Nenhum produto encontrado.<br>Toque em "+" para cadastrar o primeiro.</div>';
+      return;
+    }
+
+    container.innerHTML = list.map(p => {
+      const photo = (p.product_images && p.product_images.length)
+        ? p.product_images.slice().sort((a,b)=>a.ordem-b.ordem)[0].url
+        : null;
+      const thumb = photo
+        ? `<img src="${photo}" alt="">`
+        : `<div class="placeholder">sem foto</div>`;
+      const tags = [];
+      if(!p.disponivel) tags.push('<span class="tag-mini off">Inativo</span>');
+      if(p.destaque) tags.push('<span class="tag-mini destaque">★ Destaque</span>');
+      if(p.lancamento) tags.push('<span class="tag-mini lancamento">🆕 Lançamento</span>');
+      return `
+        <div class="product-row ${!p.disponivel ? 'unavailable' : ''}">
+          <div class="product-thumb">${thumb}</div>
+          <div class="product-info" onclick="openForm('${p.id}')">
+            <div class="title">${p.titulo}</div>
+            <div class="meta">
+              <span>${p.teams ? p.teams.nome : '—'}</span>
+              <span class="tag-mini">${p.tipo}</span>
+              <span>${fmt(p.preco)}</span>
+              ${tags.join('')}
+            </div>
+          </div>
+          <div class="product-actions">
+            <div class="icon-btn" onclick="duplicateProduct('${p.id}')" aria-label="Duplicar" title="Duplicar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            </div>
+            <div class="icon-btn" onclick="confirmDelete('${p.id}')" aria-label="Excluir" title="Excluir">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function fmt(v){ return "R$ " + parseFloat(v).toFixed(2).replace(".", ","); }
+
+  // ============================================================
+  // FORMULÁRIO (criar / editar)
+  // ============================================================
+  function renderSizePicker(){
+    const picker = document.getElementById('sizePicker');
+    picker.innerHTML = SIZES.map(s =>
+      `<div class="size-opt ${selectedSizes.includes(s) ? 'active' : ''}" onclick="toggleSize('${s}')">${s}</div>`
+    ).join('');
+  }
+  function toggleSize(s){
+    if(selectedSizes.includes(s)) selectedSizes = selectedSizes.filter(x => x !== s);
+    else selectedSizes.push(s);
+    renderSizePicker();
+  }
+
+  function renderImageGrid(){
+    const grid = document.getElementById('imageGrid');
+    let html = formImages.map((img, i) => `
+      <div class="image-slot">
+        <span class="order-badge">${i === 0 ? 'Principal' : i + 1}</span>
+        ${img.uploading
+          ? '<div class="uploading"><span class="spinner"></span></div>'
+          : `<img src="${img.url}" alt=""><button class="remove-btn" onclick="removeImage(${i})">×</button>
+             <div class="move-btns">
+               <button class="move-btn" onclick="moveImage(${i}, -1)" ${i === 0 ? 'disabled' : ''} aria-label="Mover para a esquerda">‹</button>
+               <button class="move-btn" onclick="moveImage(${i}, 1)" ${i === formImages.length - 1 ? 'disabled' : ''} aria-label="Mover para a direita">›</button>
+             </div>`}
+      </div>
+    `).join('');
+    if(formImages.length < 6){
+      html += `<div class="image-slot add-slot" onclick="document.getElementById('imageFileInput').click()">+</div>`;
+    }
+    grid.innerHTML = html;
+  }
+
+  function openForm(productId){
+    editingProductId = productId;
+    const product = productId ? PRODUCTS_CACHE.find(p => p.id === productId) : null;
+
+    document.getElementById('formTitle').textContent = product ? 'Editar produto' : 'Novo produto';
+    document.getElementById('fieldTeam').value = product ? product.teams.id : (TEAMS_CACHE[0] ? TEAMS_CACHE[0].id : '');
+    document.getElementById('fieldTipo').value = product ? product.tipo : 'Torcedor';
+    document.getElementById('fieldTitulo').value = product ? (product.titulo || '') : '';
+    document.getElementById('fieldSubtitulo').value = product ? (product.subtitulo || '') : '';
+    document.getElementById('fieldDescricao').value = product ? (product.descricao || '') : '';
+    document.getElementById('fieldPreco').value = product ? product.preco : '';
+    document.getElementById('fieldTags').value = product && product.tags ? product.tags.join(', ') : '';
+    document.getElementById('fieldDisponivel').checked = product ? product.disponivel : true;
+    document.getElementById('fieldDestaque').checked = product ? !!product.destaque : false;
+    document.getElementById('fieldLancamento').checked = product ? !!product.lancamento : false;
+
+    selectedSizes = (product && product.tamanhos) ? product.tamanhos.slice() : [];
+    renderSizePicker();
+
+    formImages = (product && product.product_images)
+      ? product.product_images.slice().sort((a,b)=>a.ordem-b.ordem).map(img => ({ url: img.url, ordem: img.ordem, isNew: false, id: img.id }))
+      : [];
+    renderImageGrid();
+
+    document.getElementById('formOverlay').classList.remove('hidden');
+    window.scrollTo(0,0);
+    checkCollisionWarning();
+  }
+
+  // Mostra um aviso em tempo real se o Time+Tipo escolhido já tem produto —
+  // assim você percebe ANTES de tentar salvar, não só na hora da confirmação.
+  // Mostra quantos produtos já existem para esse Time+Tipo — só informativo,
+  // não bloqueia nada. Você pode cadastrar quantos quiser (ex.: Camisa 1,
+  // Camisa 2, Camisa 3, todas "Torcedor" do mesmo time).
+  function checkCollisionWarning(){
+    const warningEl = document.getElementById('collisionWarning');
+    if(editingProductId){ warningEl.style.display = "none"; return; } // editando, não se aplica
+
+    const teamId = document.getElementById('fieldTeam').value;
+    const team = TEAMS_CACHE.find(t => t.id === teamId);
+    const tipo = document.getElementById('fieldTipo').value;
+    if(!team){ warningEl.style.display = "none"; return; }
+
+    const prefix = team.nome + "||" + tipo;
+    const count = PRODUCTS_CACHE.filter(p => p.id === prefix || p.id.startsWith(prefix + "||")).length;
+    if(count > 0){
+      warningEl.textContent = `ℹ Já existem ${count} produto(s) "${tipo}" para ${team.nome}. Salvar aqui cadastra mais um (não substitui os outros).`;
+      warningEl.style.display = "block";
+    } else {
+      warningEl.style.display = "none";
+    }
+  }
+
+  function closeForm(){
+    document.getElementById('formOverlay').classList.add('hidden');
+    editingProductId = null;
+  }
+
+  // Gera um ID único para um produto novo. Se já existir produto(s) com o
+  // mesmo Time+Tipo, adiciona um número sequencial no final — assim é
+  // possível cadastrar várias camisas diferentes sob o mesmo Time+Tipo
+  // (ex.: "Real Madrid||Torcedor", "Real Madrid||Torcedor||2", "||3"...).
+  // IMPORTANTE: só usar para criar produto NOVO. Ao editar, o ID existente
+  // do produto deve ser mantido (favoritos/carrinho dependem dele).
+  function buildProductId(teamNome, tipo){
+    const prefix = teamNome + "||" + tipo;
+    const jaExiste = (id) => PRODUCTS_CACHE.some(p => p.id === id);
+    if(!jaExiste(prefix)) return prefix;
+    let n = 2;
+    while(jaExiste(prefix + "||" + n)) n++;
+    return prefix + "||" + n;
+  }
+
+  async function saveProduct(){
+    const teamId = document.getElementById('fieldTeam').value;
+    const team = TEAMS_CACHE.find(t => t.id === teamId);
+    const tipo = document.getElementById('fieldTipo').value;
+    const preco = parseFloat(document.getElementById('fieldPreco').value);
+
+    if(!team){ showToast('Selecione um time.', 'error'); return; }
+    if(isNaN(preco) || preco <= 0){ showToast('Informe um preço válido.', 'error'); return; }
+
+    const titulo = document.getElementById('fieldTitulo').value.trim() || (team.nome + ' 25/26');
+    const subtitulo = document.getElementById('fieldSubtitulo').value.trim() || null;
+    const descricao = document.getElementById('fieldDescricao').value.trim() || null;
+    const tagsRaw = document.getElementById('fieldTags').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+    const disponivel = document.getElementById('fieldDisponivel').checked;
+    const destaque = document.getElementById('fieldDestaque').checked;
+    const lancamento = document.getElementById('fieldLancamento').checked;
+    const tamanhos = selectedSizes.length ? selectedSizes : null;
+
+    const id = editingProductId || buildProductId(team.nome, tipo);
+
+    await commitSaveProduct(id, team, tipo, titulo, subtitulo, descricao, preco, tamanhos, tags, disponivel, destaque, lancamento);
+  }
+
+  async function commitSaveProduct(id, team, tipo, titulo, subtitulo, descricao, preco, tamanhos, tags, disponivel, destaque, lancamento){
+    const saveBtn = document.getElementById('saveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner"></span>';
+
+    const { error } = await supabaseClient
+      .from('products')
+      .upsert({
+        id, team_id: team.id, tipo, titulo, subtitulo, descricao, preco,
+        tamanhos, tags, disponivel, destaque, lancamento
+      });
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Salvar produto';
+
+    if(error){
+      showToast('Erro ao salvar: ' + error.message, 'error');
+      return;
+    }
+
+    // Salva a lista de fotos de forma segura: apaga os registros antigos de
+    // foto desse produto e regrava tudo na ordem atual da tela. Isso evita um
+    // problema sutil que aconteceria tentando atualizar foto por foto quando
+    // você adiciona uma foto nova E reordena ao mesmo tempo (duas fotos
+    // podem brigar pela mesma posição por um instante). Apagar e regravar
+    // elimina esse risco — o arquivo em si no Storage não é afetado, só a
+    // "ficha" que diz qual foto é a 1ª, 2ª etc.
+    if(formImages.length > 0 || editingProductId){
+      await supabaseClient.from('product_images').delete().eq('product_id', id);
+    }
+    for(let i = 0; i < formImages.length; i++){
+      const img = formImages[i];
+      if(img.isNew && img.file){
+        await uploadImageFile(id, img.file, i);
+      } else {
+        await supabaseClient.from('product_images').insert({ product_id: id, url: img.url, ordem: i });
+      }
+    }
+
+    showToast('Produto salvo com sucesso!', 'success');
+    closeForm();
+    await loadProducts();
+    renderProductList();
+  }
+
+  // ============================================================
+  // IMAGENS
+  // ============================================================
+  function handleImageSelected(event){
+    const files = Array.from(event.target.files || []);
+    if(files.length === 0) return;
+    const espacoLivre = 6 - formImages.length;
+    if(files.length > espacoLivre){
+      showToast(`Só cabem mais ${espacoLivre} foto(s) neste produto (máximo 6). As ${files.length - espacoLivre} última(s) selecionada(s) foram ignoradas.`, 'error');
+    }
+    files.slice(0, espacoLivre).forEach(file => {
+      const localUrl = URL.createObjectURL(file);
+      formImages.push({ url: localUrl, ordem: formImages.length, isNew: true, file });
+    });
+    renderImageGrid();
+    event.target.value = '';
+  }
+
+  // Move uma foto uma posição pra frente (direction=-1) ou pra trás (direction=1)
+  // na ordem de exibição. A ordem final é recalculada e salva quando o
+  // produto for salvo (o campo "ordem" de cada foto já reflete a posição atual).
+  function moveImage(index, direction){
+    const newIndex = index + direction;
+    if(newIndex < 0 || newIndex >= formImages.length) return;
+    const temp = formImages[index];
+    formImages[index] = formImages[newIndex];
+    formImages[newIndex] = temp;
+    renderImageGrid();
+  }
+
+  function removeImage(index){
+    const img = formImages[index];
+    formImages.splice(index, 1);
+    renderImageGrid();
+    // Se a imagem já existia no banco, remove de lá também
+    if(img && !img.isNew && img.id){
+      supabaseClient.from('product_images').delete().eq('id', img.id);
+    }
+  }
+
+  async function uploadImageFile(productId, file, ordem){
+    const ext = file.name.split('.').pop();
+    const path = `${productId.replace(/\|\|/g, '-').replace(/\s+/g, '-')}-${ordem}-${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from(STORAGE_BUCKET)
+      .upload(path, file, { upsert: true });
+
+    if(uploadError){
+      showToast('Erro ao enviar foto: ' + uploadError.message, 'error');
+      return;
+    }
+
+    const { data: publicUrlData } = supabaseClient.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+    const publicUrl = publicUrlData.publicUrl;
+
+    const { error: dbError } = await supabaseClient.from('product_images')
+      .insert({ product_id: productId, url: publicUrl, ordem });
+
+    if(dbError){
+      showToast('Foto enviada, mas erro ao salvar no banco: ' + dbError.message, 'error');
+    }
+  }
+
+  // ============================================================
+  // DUPLICAR / EXCLUIR
+  // ============================================================
+  async function duplicateProduct(id){
+    const product = PRODUCTS_CACHE.find(p => p.id === id);
+    if(!product) return;
+    openForm(id); // reaproveita os dados do produto original nos campos
+    editingProductId = null; // mas ao salvar, cria um produto NOVO (não sobrescreve o original)
+    document.getElementById('formTitle').textContent = 'Duplicar produto';
+    checkCollisionWarning();
+  }
+
+  function confirmDelete(id){
+    const product = PRODUCTS_CACHE.find(p => p.id === id);
+    document.getElementById('confirmTitle').textContent = 'Excluir produto?';
+    document.getElementById('confirmText').textContent = `"${product ? product.titulo : id}" será excluído permanentemente, junto com as fotos associadas. Essa ação não pode ser desfeita.`;
+    document.getElementById('confirmActionBtn').onclick = () => deleteProduct(id);
+    document.getElementById('confirmOverlay').classList.remove('hidden');
+  }
+  function closeConfirm(){
+    document.getElementById('confirmOverlay').classList.add('hidden');
+  }
+  async function deleteProduct(id){
+    const { error } = await supabaseClient.from('products').delete().eq('id', id);
+    closeConfirm();
+    if(error){ showToast('Erro ao excluir: ' + error.message, 'error'); return; }
+    showToast('Produto excluído.', 'success');
+    await loadProducts();
+    renderProductList();
+  }
+
+  // ============================================================
+  // BANNER HERO (fotos que giram no topo da Home)
+  // ============================================================
+  const HERO_BUCKET = "banners";
+  let HERO_BANNERS = [];
+
+  async function loadHeroBanners(){
+    const { data, error } = await supabaseClient
+      .from('hero_banners')
+      .select('id, url, ordem')
+      .order('ordem', { ascending: true });
+    if(error){ showToast('Erro ao carregar banner: ' + error.message, 'error'); return; }
+    HERO_BANNERS = data || [];
+  }
+
+  // Detecta se a URL é de um vídeo (mesma lógica usada no catálogo público)
+  function isHeroVideo(url){
+    return /\.(mp4|webm|mov)(\?.*)?$/i.test(url || '');
+  }
+
+  function renderHeroGrid(){
+    const grid = document.getElementById('heroImageGrid');
+    let html = HERO_BANNERS.map((banner, i) => {
+      const midia = isHeroVideo(banner.url)
+        ? `<video src="${banner.url}" muted loop playsinline autoplay></video><span class="media-badge">vídeo</span>`
+        : `<img src="${banner.url}" alt="">`;
+      return `
+      <div class="image-slot">
+        <span class="order-badge">${i + 1}</span>
+        ${midia}
+        <button class="remove-btn" onclick="removeHeroBanner('${banner.id}')">×</button>
+        <div class="move-btns">
+          <button class="move-btn" onclick="moveHeroBanner(${i}, -1)" ${i === 0 ? 'disabled' : ''} aria-label="Mover para a esquerda">‹</button>
+          <button class="move-btn" onclick="moveHeroBanner(${i}, 1)" ${i === HERO_BANNERS.length - 1 ? 'disabled' : ''} aria-label="Mover para a direita">›</button>
+        </div>
+      </div>
+    `;
+    }).join('');
+    html += `
+      <div class="image-slot add-slot" onclick="document.getElementById('heroFileInput').click()">
+        <div class="add-slot-inner">
+          <span class="add-slot-plus">+</span>
+          <span class="add-slot-label">Foto ou vídeo</span>
+        </div>
+      </div>`;
+    grid.innerHTML = html;
+  }
+
+  async function openHeroOverlay(){
+    document.getElementById('heroOverlay').classList.remove('hidden');
+    document.getElementById('heroImageGrid').innerHTML = '<div class="no-results">Carregando…</div>';
+    await loadHeroBanners();
+    renderHeroGrid();
+    window.scrollTo(0,0);
+  }
+
+  function closeHeroOverlay(){
+    document.getElementById('heroOverlay').classList.add('hidden');
+  }
+
+  // Limite de tamanho para vídeo do banner. Vídeo muito pesado deixa o
+  // catálogo lento pra carregar no celular do cliente (e consome o plano
+  // gratuito de armazenamento mais rápido).
+  const HERO_VIDEO_MAX_MB = 10;
+
+  async function handleHeroFileSelected(event){
+    const files = Array.from(event.target.files || []);
+    event.target.value = '';
+    if(files.length === 0) return;
+
+    let proximaOrdem = HERO_BANNERS.length > 0 ? Math.max(...HERO_BANNERS.map(b => b.ordem)) + 1 : 0;
+    let enviados = 0;
+
+    for(const file of files){
+      const ehVideo = file.type.startsWith('video/');
+      const tamanhoMB = file.size / (1024 * 1024);
+
+      if(ehVideo && tamanhoMB > HERO_VIDEO_MAX_MB){
+        showToast(`"${file.name}" tem ${tamanhoMB.toFixed(1)}MB. Vídeos do banner devem ter até ${HERO_VIDEO_MAX_MB}MB para não deixar o catálogo lento.`, 'error');
+        continue;
+      }
+
+      const ext = file.name.split('.').pop();
+      const path = `hero-${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+
+      const { error: uploadError } = await supabaseClient.storage.from(HERO_BUCKET).upload(path, file, { upsert: true, contentType: file.type || undefined });
+      if(uploadError){
+        showToast('Erro ao enviar arquivo do banner: ' + uploadError.message, 'error');
+        continue;
+      }
+      const { data: publicUrlData } = supabaseClient.storage.from(HERO_BUCKET).getPublicUrl(path);
+      const { error: dbError } = await supabaseClient.from('hero_banners').insert({ url: publicUrlData.publicUrl, ordem: proximaOrdem });
+      if(dbError){ showToast('Erro ao salvar no banco: ' + dbError.message, 'error'); continue; }
+      proximaOrdem++;
+      enviados++;
+    }
+
+    if(enviados > 0) showToast('Banner atualizado.', 'success');
+    await loadHeroBanners();
+    renderHeroGrid();
+  }
+
+  async function moveHeroBanner(index, direction){
+    const newIndex = index + direction;
+    if(newIndex < 0 || newIndex >= HERO_BANNERS.length) return;
+    const a = HERO_BANNERS[index], b = HERO_BANNERS[newIndex];
+    // Troca as ordens das duas fotos entre si
+    await supabaseClient.from('hero_banners').update({ ordem: b.ordem }).eq('id', a.id);
+    await supabaseClient.from('hero_banners').update({ ordem: a.ordem }).eq('id', b.id);
+    await loadHeroBanners();
+    renderHeroGrid();
+  }
+
+  async function removeHeroBanner(id){
+    const { error } = await supabaseClient.from('hero_banners').delete().eq('id', id);
+    if(error){ showToast('Erro ao excluir: ' + error.message, 'error'); return; }
+    await loadHeroBanners();
+    renderHeroGrid();
+  }
+</script>
+</body>
+</html>
